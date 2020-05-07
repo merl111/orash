@@ -9,6 +9,7 @@ int builtin_ls(void);
 int builtin_clear(void);
 int builtin_pwd(void);
 int builtin_help(void);
+int builtin_edit(void);
 
 typedef int (*func)();
 

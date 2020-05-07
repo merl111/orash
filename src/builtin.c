@@ -12,6 +12,7 @@ builtin_t builtins[] = {
     {"ls", builtin_ls},
     {"clear", builtin_clear},
     {"pwd", builtin_pwd},
+    {"edit", builtin_edit},
     {"help", builtin_help},
 };
 
@@ -51,6 +52,20 @@ int find_matching(const char* buf, char** match)
         }
     }
 
+    return 0;
+}
+
+int builtin_edit(void)
+{
+    /* 
+     * For simplicity we use system() for now, but
+     * we should probably fork another process here.
+     */
+    const char* file = "test.txt";
+    const char* editor = getenv("EDITOR");
+    char buffer[512];
+    snprintf(buffer, 512, "%s %s", "geany", file);
+    int status = system(buffer);
     return 0;
 }
 

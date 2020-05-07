@@ -1,0 +1,7 @@
+- implement args for builtins
+- implement OCI
+- signal handler for graceful shutdown.
+- table print for result, check OCI lib if there's already something
+- helper functions to read/write buffers/files
+
+
