@@ -1,6 +1,10 @@
+- real multiline edit, need to extend libnoise for that, maybe PR upstream then. [in progress]
+- fix hints, show only part left from hint.
 - implement args for builtins
+- improve build system, cmake/autogen whatever, but plain make is ugly af.
 - implement OCI
 - signal handler for graceful shutdown.
+- pin results ( save query results to view again later )
 - table print for result, check OCI lib if there's already something
 - helper functions to read/write buffers/files
 
