@@ -1,11 +1,19 @@
 todo:
 - implement args for builtins
-- improve build system, cmake/autogen whatever, but plain make is ugly af.
-- implement OCI
+- improve build system, .
 - signal handler for graceful shutdown.
+- connection manager
+- implement OCI
+- add spool/redirect
 - pin results ( save query results to view again later )
 - table print for result, check OCI lib if there's already something
 - helper functions to read/write buffers/files
+- read enviroment variables
+- filename completion
+
+future:
+- simple enviroment struct, should be easier to handlu multiple OCI connections then
+- status line, schema browser, needs ncurses or termbox, bigger task
 
 should be done:
 - fix hints, show only part left from hint.
