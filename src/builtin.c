@@ -45,7 +45,7 @@ int find_matching(const char* buf, char** match)
     // find a match for buf 
     for (int i = 0; i < get_builtin_count(); i++)
     {
-        if (strstr(builtins[i].name, buf) != NULL)
+        if (strstr(builtins[i].name, buf) == builtins[i].name)
         {
             *match = builtins[i].name;
             return 1;

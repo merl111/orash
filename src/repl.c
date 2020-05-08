@@ -16,14 +16,23 @@ void _completion(const char *buf, linenoiseCompletions *lc) {
 }
 
 char* _hints(const char *buf, int *color, int *bold) {
+
+    if(strlen(buf) == 0)
+    {
+        return "";
+    }
+
     char* match = NULL;
+
     if (find_matching(buf, &match))
     {
+        int len = strlen(buf);
+        match = &match[len];
         *color = 35;
         *bold = 0;
         return match;
     }
-    return NULL;
+    return "";
 }
 
 int _builtin(const char *buf) {
