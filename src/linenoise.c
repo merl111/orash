@@ -886,7 +886,7 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
             }
 
             /* check for builtin function or termination char */
-            if (builtinCallback != NULL )
+            if (builtinCallback != NULL && l.pos > 0)
             {
                 if (builtinCallback(l.buf) != 1)
                 {

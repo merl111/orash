@@ -1,6 +1,5 @@
 todo:
-- implement args for builtins
-- improve build system, .
+- improve build system
 - signal handler for graceful shutdown.
 - connection manager
 - implement OCI
@@ -16,5 +15,6 @@ future:
 - status line, schema browser, needs ncurses or termbox, bigger task
 
 should be done:
+- implement args for builtins
 - fix hints, show only part left from hint.
 - real multiline edit, need to extend libnoise for that, maybe PR upstream then. [in progress]

@@ -1,19 +1,22 @@
+#define _DEFAULT_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include <dirent.h>
 #include "../inc/linenoise.h"
 #include "../inc/builtin.h"
+#include "../inc/utils.h"
 
 builtin_t builtins[] = { 
-    {"exit", builtin_exit},
-    {"ls", builtin_ls},
-    {"clear", builtin_clear},
-    {"pwd", builtin_pwd},
-    {"edit", builtin_edit},
-    {"help", builtin_help},
+    { "exit",   NULL, builtin_exit},
+    { "ls",     NULL, builtin_ls},
+    { "clear",  NULL, builtin_clear},
+    { "pwd",    NULL, builtin_pwd},
+    { "edit",   NULL, builtin_edit},
+    { "help",   NULL, builtin_help},
 };
 
 int get_builtin_count(void)
@@ -26,23 +29,52 @@ builtin_t* get_builtins(void)
     return &builtins[0];
 }
 
-func get_func_by_name(const char* name)
+int get_func_by_name(const char* line, builtin_t** builtin)
 {
+    const char* delimiter = " ";
+    char* method; 
+    char* args;
+    int success = 0;
+
+    size_t len = strlen(line);
+    char* line_cpy = (char*) calloc(len + 1, sizeof(char));
+    strncpy(line_cpy, line, len); //TODO unsecure, fix later
+    line_cpy[len] = '\0';
+
+    method = strtok_r(line_cpy, delimiter, &args);
+
+    if (method == NULL)
+    {
+        return success;
+    }
+
     for (int i = 0; i < get_builtin_count(); i++)
     {
         //return function pointer if the name is an exact match
-        if (strcmp(builtins[i].name, name) == 0)
+        if (strcmp(builtins[i].name, method) == 0)
         {
-            return builtins[i].func;
+            if (strlen(args) > 0)
+            {
+                builtins[i].args = malloc(strlen(args) * sizeof(char));
+                strncpy(builtins[i].args, args, strlen(args));
+                builtins[i].args[strlen(args)] = '\0';
+            }
+            else
+            {
+                builtins[i].args = "";
+            }
+
+            *builtin = &builtins[i];
+            success = 1;
         }
     }
 
-    return NULL;
+    free(line_cpy);
+    return success;
 }
 
 int find_matching(const char* buf, char** match)
 {
-    // find a match for buf 
     for (int i = 0; i < get_builtin_count(); i++)
     {
         if (strstr(builtins[i].name, buf) == builtins[i].name)
@@ -55,22 +87,23 @@ int find_matching(const char* buf, char** match)
     return 0;
 }
 
-int builtin_edit(void)
+int builtin_edit(char* args)
 {
     /* 
      * For simplicity we use system() for now, but
      * we should probably fork another process here.
      */
-    const char* file = "test.txt";
     const char* editor = getenv("EDITOR");
     char buffer[512];
-    snprintf(buffer, 512, "%s %s", "geany", file);
-    int status = system(buffer);
+    snprintf(buffer, 512, "%s %s", editor, args); //TODO clang warning, unsecure snprintf, I know I know
+    system(buffer);
     return 0;
 }
 
-int builtin_pwd(void)
+int builtin_pwd(char* args)
 {
+    UNUSED(args);
+
     char cwd[1024];
     getcwd(cwd, sizeof(cwd));
     printf("%s\n", cwd);
@@ -78,51 +111,34 @@ int builtin_pwd(void)
     return 0;
 }
 
-int builtin_exit(void)
+int builtin_exit(char* args)
 {
+    UNUSED(args);
     printf("shutting down now!");
     exit(EXIT_SUCCESS);
 }
 
-int builtin_ls(void)
+int builtin_ls(char* args)
 {
-    //TODO now it's time to define an argument for builtin methods
-    //struct dirent **namelist;
-    //int n;
-
-    //if (args.something == NULL)
-    //{
-    //    n = scandir(".",&namelist,NULL,alphasort);
-    //}
-    //else
-    //{
-    //    n = scandir(args[1], &namelist, NULL, alphasort);
-    //}
-    //if(n < 0)
-    //{
-    //    perror("scandir");
-    //    exit(EXIT_FAILURE);
-    //}
-    //else
-    //{
-    //    while (n--)
-    //    {
-    //        printf("%s\n",namelist[n]->d_name);
-    //        free(namelist[n]);
-    //    }
-    //    free(namelist);
-    //}
+    if (args != NULL)
+    {
+        char cmd[strlen(args) + 3];
+        snprintf(cmd, strlen(args)+4, "ls %s", args);
+        system(cmd);
+    }
 
     return 0;
 }
 
-int builtin_clear(void)
+int builtin_clear(char* args)
 {
+    UNUSED(args);
     linenoiseClearScreen();
     return 0;
 }
 
-int builtin_help(void)
+int builtin_help(char* args)
 {
+    UNUSED(args);
     return 0;
 }

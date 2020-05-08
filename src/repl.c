@@ -38,10 +38,10 @@ char* _hints(const char *buf, int *color, int *bold) {
 int _builtin(const char *buf) {
 
     int success = 1;
+    builtin_t* builtin;
 
-    if (get_func_by_name(buf) != NULL)
+    if (get_func_by_name(buf, &builtin))
     {
-        printf("found: %s \n", buf);
         return success;
     }
 
@@ -77,10 +77,7 @@ int main(int argc, char **argv) {
     while(argc > 1) {
         argc--;
         argv++;
-        if (!strcmp(*argv,"--multiline")) {
-            linenoiseSetMultiLine(1);
-            printf("Multi-line mode enabled.\n");
-        }
+
         if (!strcmp(*argv,"--keys")) {
             linenoisePrintKeyCodes();
         }
@@ -90,23 +87,23 @@ int main(int argc, char **argv) {
     init_completion();
 
     while((line = linenoise(prompt)) != NULL) {
-        printf("line: %s\n", line);
+        builtin_t* builtin;
 
         if (line[0] != '\0' && line[0] != '/') {
 
-            func method = get_func_by_name(line);
-            if (method != NULL)
+            if (get_func_by_name(line, &builtin))
             {
                 linenoiseHistoryAdd(line);
                 linenoiseHistorySave(hist_path);
-                method();
+                // now call builtin func
+                builtin->func(builtin->args);
             }
             else
             {
                 printf("Command not found: %s\n", line);
             }
         }
-
+        //free(builtin->args);
         free(line);
     }
     return 0;
