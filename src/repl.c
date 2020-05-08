@@ -26,6 +26,28 @@ char* _hints(const char *buf, int *color, int *bold) {
     return NULL;
 }
 
+int _builtin(const char *buf) {
+
+    int success = 1;
+
+    if (get_func_by_name(buf) != NULL)
+    {
+        printf("found: %s \n", buf);
+        return success;
+    }
+
+    size_t len = strlen(buf);
+    if (len > 0)
+    {
+        if (buf[len-1] == ';') //TODO maybe we need a better handling, but for now that should work.
+        {
+            return success;
+        }
+    }
+
+    return -1;
+}
+
 void init_history(void)
 {
     linenoiseHistoryLoad(hist_path);
@@ -36,11 +58,13 @@ void init_completion(void)
 {
     linenoiseSetCompletionCallback(_completion);
     linenoiseSetHintsCallback(_hints);
+    linenoiseSetBuiltinCallback(_builtin);
 }
 
 int main(int argc, char **argv) {
     char *line;
 
+    linenoiseSetMultiLine(1);
     while(argc > 1) {
         argc--;
         argv++;
@@ -48,12 +72,16 @@ int main(int argc, char **argv) {
             linenoiseSetMultiLine(1);
             printf("Multi-line mode enabled.\n");
         }
+        if (!strcmp(*argv,"--keys")) {
+            linenoisePrintKeyCodes();
+        }
     }
 
     init_history();
     init_completion();
 
     while((line = linenoise(prompt)) != NULL) {
+        printf("line: %s\n", line);
 
         if (line[0] != '\0' && line[0] != '/') {
 
