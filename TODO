@@ -1,9 +1,10 @@
 todo:
 - improve build system
 - signal handler for graceful shutdown.
+- add spool/redirect
 - connection manager
 - implement OCI
-- add spool/redirect
+- implement safe strcpy (maybe strcpy_s)
 - pin results ( save query results to view again later )
 - table print for result, check OCI lib if there's already something
 - helper functions to read/write buffers/files

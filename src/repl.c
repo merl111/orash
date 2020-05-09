@@ -70,9 +70,33 @@ void init_completion(void)
     linenoiseSetBuiltinCallback(_builtin);
 }
 
-int main(int argc, char **argv) {
-    char *line;
+#if _DEBUG
+#include <execinfo.h>
+#include <signal.h>
+#include <unistd.h>
+#include <termios.h>
 
+void segv_handler(int sig) {
+    void *array[20];
+    size_t frames;
+
+    extern struct termios* p_termios;
+    tcsetattr(STDIN_FILENO,TCSAFLUSH,&(*p_termios));
+
+    frames = backtrace(array, 20);
+    fprintf(stderr, "Error: signal %d:\n", sig);
+    backtrace_symbols_fd(array, frames, STDERR_FILENO);
+    exit(1);
+}
+#endif
+
+int main(int argc, char **argv) {
+
+#if _DEBUG
+    signal(SIGSEGV, segv_handler);
+#endif
+
+    char *line;
     linenoiseSetMultiLine(1);
     while(argc > 1) {
         argc--;

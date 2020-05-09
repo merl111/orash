@@ -126,6 +126,11 @@ static linenoiseBuiltinCallback *builtinCallback = NULL;
 static linenoiseFreeHintsCallback *freeHintsCallback = NULL;
 
 static struct termios orig_termios; /* In order to restore at exit.*/
+
+#if _DEBUG
+struct termios* p_termios = &orig_termios;
+#endif
+
 static int maskmode = 0; /* Show "***" instead of input. For passwords. */
 static int rawmode = 0; /* For atexit() function to check if restore is needed*/
 static int mlmode = 0;  /* Multi line mode. Default is single line. */
@@ -782,6 +787,7 @@ void linenoiseEditContinue(struct linenoiseState *l) {
     l->pos = 0;
     l->len = 0;
     l->prompt = ">> ";
+    printf("buf: %s\n", l->buf);
     refreshLine(l);
 }
 
@@ -811,6 +817,7 @@ void linenoiseEditDeletePrevWord(struct linenoiseState *l) {
  * The function returns the length of the current buffer. */
 static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, const char *prompt)
 {
+    printf("\nbuf: %s\n", buf);
     struct linenoiseState l;
 
     /* Populate the linenoise state that we pass to functions implementing
