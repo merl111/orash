@@ -1,5 +1,4 @@
 todo:
-- improve build system
 - signal handler for graceful shutdown. [done for debug, should also get a release version]
 - add config processor for .orashrc
 - add spool/redirect
@@ -17,5 +16,6 @@ future:
 - status line, schema browser, needs ncurses or termbox, bigger task
 
 should be done:
+- improve build system
 - implement args for builtins
 - fix hints, show only part left from hint.
