@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
-#include "../inc/linenoise.h"
-#include "../inc/builtin.h"
-#include "../inc/utils.h"
+#include "linenoise.h"
+#include "builtin.h"
+#include "utils.h"
 
 builtin_t builtins[] = { 
     { "exit",   NULL, builtin_exit},

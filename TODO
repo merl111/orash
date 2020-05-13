@@ -1,6 +1,7 @@
 todo:
 - improve build system
-- signal handler for graceful shutdown.
+- signal handler for graceful shutdown. [done for debug, should also get a release version]
+- add config processor for .orashrc
 - add spool/redirect
 - connection manager
 - implement OCI
@@ -18,4 +19,3 @@ future:
 should be done:
 - implement args for builtins
 - fix hints, show only part left from hint.
-- real multiline edit, need to extend libnoise for that, maybe PR upstream then. [in progress]

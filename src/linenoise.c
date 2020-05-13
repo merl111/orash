@@ -115,22 +115,16 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include "../inc/linenoise.h"
+#include "linenoise.h"
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 #define LINENOISE_MAX_LINE 4096
 static char *unsupported_term[] = {"dumb","cons25","emacs",NULL};
 static linenoiseCompletionCallback *completionCallback = NULL;
 static linenoiseHintsCallback *hintsCallback = NULL;
-static linenoiseBuiltinCallback *builtinCallback = NULL;
 static linenoiseFreeHintsCallback *freeHintsCallback = NULL;
 
 static struct termios orig_termios; /* In order to restore at exit.*/
-
-#if _DEBUG
-struct termios* p_termios = &orig_termios;
-#endif
-
 static int maskmode = 0; /* Show "***" instead of input. For passwords. */
 static int rawmode = 0; /* For atexit() function to check if restore is needed*/
 static int mlmode = 0;  /* Multi line mode. Default is single line. */
@@ -157,7 +151,7 @@ struct linenoiseState {
     int history_index;  /* The history index we are currently editing. */
 };
 
-enum KEY_ACTION {
+enum KEY_ACTION{
 	KEY_NULL = 0,	    /* NULL */
 	CTRL_A = 1,         /* Ctrl+a */
 	CTRL_B = 2,         /* Ctrl-b */
@@ -184,7 +178,7 @@ int linenoiseHistoryAdd(const char *line);
 static void refreshLine(struct linenoiseState *l);
 
 /* Debugging macro. */
-#if 1
+#if 0
 FILE *lndebug_fp = NULL;
 #define lndebug(...) \
     do { \
@@ -436,10 +430,6 @@ void linenoiseSetHintsCallback(linenoiseHintsCallback *fn) {
     hintsCallback = fn;
 }
 
-void linenoiseSetBuiltinCallback(linenoiseBuiltinCallback *fn) {
-    builtinCallback = fn;
-}
-
 /* Register a function to free the hints returned by the hints callback
  * registered with linenoiseSetHintsCallback(). */
 void linenoiseSetFreeHintsCallback(linenoiseFreeHintsCallback *fn) {
@@ -662,13 +652,9 @@ static void refreshMultiLine(struct linenoiseState *l) {
  * refreshMultiLine() according to the selected mode. */
 static void refreshLine(struct linenoiseState *l) {
     if (mlmode)
-    {
         refreshMultiLine(l);
-    }
     else
-    {
         refreshSingleLine(l);
-    }
 }
 
 /* Insert the character 'c' at cursor current position.
@@ -781,16 +767,6 @@ void linenoiseEditBackspace(struct linenoiseState *l) {
     }
 }
 
-/* Continous line implementation. */
-void linenoiseEditContinue(struct linenoiseState *l) {
-    linenoiseEditInsert(l,'\n');
-    l->pos = 0;
-    l->len = 0;
-    l->prompt = ">> ";
-    printf("buf: %s\n", l->buf);
-    refreshLine(l);
-}
-
 /* Delete the previosu word, maintaining the cursor at the start of the
  * current word. */
 void linenoiseEditDeletePrevWord(struct linenoiseState *l) {
@@ -817,7 +793,6 @@ void linenoiseEditDeletePrevWord(struct linenoiseState *l) {
  * The function returns the length of the current buffer. */
 static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, const char *prompt)
 {
-    printf("\nbuf: %s\n", buf);
     struct linenoiseState l;
 
     /* Populate the linenoise state that we pass to functions implementing
@@ -842,19 +817,13 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
      * initially is just an empty string. */
     linenoiseHistoryAdd("");
 
-    if (write(l.ofd,prompt,l.plen) == -1) 
-    {
-        return -1;
-    }
-
+    if (write(l.ofd,prompt,l.plen) == -1) return -1;
     while(1) {
         char c;
         int nread;
         char seq[3];
 
         nread = read(l.ifd,&c,1);
-        //if (c == '\0' || nread == 0) continue;
-
         if (nread <= 0) return l.len;
 
         /* Only autocomplete when the callback is set. It returns < 0 when
@@ -864,25 +833,15 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
             c = completeLine(&l);
             /* Return on errors */
             if (c < 0) return l.len;
-
             /* Read next character when 0 */
-            if (c == 0)
-            {
-                linenoiseEditInsert(&l, '\t');
-                continue;
-            }
+            if (c == 0) continue;
         }
 
         switch(c) {
         case ENTER:    /* enter */
             history_len--;
             free(history[history_len]);
-
-            if (mlmode)
-            {
-                linenoiseEditMoveEnd(&l);
-            }
-
+            if (mlmode) linenoiseEditMoveEnd(&l);
             if (hintsCallback) {
                 /* Force a refresh without hints to leave the previous
                  * line as the user typed it after a newline. */
@@ -891,17 +850,6 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
                 refreshLine(&l);
                 hintsCallback = hc;
             }
-
-            /* check for builtin function or termination char */
-            if (builtinCallback != NULL && l.pos > 0)
-            {
-                if (builtinCallback(l.buf) != 1)
-                {
-                    linenoiseEditContinue(&l);
-                    break;
-                }
-            }
-
             return (int)l.len;
         case CTRL_C:     /* ctrl-c */
             errno = EAGAIN;
@@ -1042,7 +990,6 @@ void linenoisePrintKeyCodes(void) {
         int nread;
 
         nread = read(STDIN_FILENO,&c,1);
-        printf("nread: %d\n", nread);
         if (nread <= 0) continue;
         memmove(quit,quit+1,sizeof(quit)-1); /* shift string to left. */
         quit[sizeof(quit)-1] = c; /* Insert current char on the right. */
