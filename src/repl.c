@@ -233,32 +233,42 @@ int get_input(orash_t *p)
 int main(int argc, char **argv) {
 
     int ret;
+    char* user  = NULL;
+    char* pwd   = NULL;
+    char* db    = NULL;
+
 #if _DEBUG
     signal(SIGSEGV, segv_handler);
 #endif
 
-    /*
-     * mlmode 1 = line wrapping
-     * mlmode 2 = multi line editing
-     */
+    orash_t sh_state;
+
+    printf("argc: %d argv: %s \n", argc, argv[1]);
 
     linenoiseSetMultiLine(1);
-    while(argc > 1) {
-        argc--;
-        argv++;
-
-        if (!strcmp(*argv,"--keys")) {
-            linenoisePrintKeyCodes();
-        }
-    }
-
     init_history();
     init_completion();
 
+    if (argc > 1)
+    {
+        parse_login(argv[1], &user, &pwd, &db);
+    }
 
-    orash_t sh_state;
-    //init_orash(&sh_state);
+    printf("user: %s, pass: %s, db: %s \n", user, pwd, db);
+
+
+    if (init_orash(&sh_state, user, pwd, db))
+    {
+        printf("Initializing state failed!");
+        exit(-1);
+    }
+
+    printf("Database successfully initialized!!");
+    
+    free(user);
+    free(pwd);
+    free(db);
 
     ret = get_input(&sh_state);
-    return 0;
+    return ret;
 }

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string.h>
-//#include <oci.h>
+#include <oci.h>
 #include "utils.h"
 
 /* Debugging macro. */
@@ -134,9 +134,9 @@ void identify_input(const char* input, int* mode)
 
     const char* del = " ";
     int len = strlen(input);
-    char* input_copy = malloc(len);
+    char* input_copy = malloc(len * sizeof(char));
     char* head = NULL;
-    char* tail = NULL;
+    char* saveptr= NULL;
 
     shdbg("input: %s \n", input);
 
@@ -147,9 +147,9 @@ void identify_input(const char* input, int* mode)
 
     strncpy(input_copy, input, len);
 
-    head = strtok_r(input_copy, del, &tail);
+    head = strtok_r(input_copy, del, &saveptr);
     /* add NULL terminator */
-    head[len-strlen(tail)] = 0;
+    head[len-strlen(saveptr)] = 0;
 
     shdbg("head: %s \n", head);
 
@@ -172,53 +172,28 @@ void identify_input(const char* input, int* mode)
     free(input_copy);
 }
 
-//void print_err(void *handle, ub4 htype)
-//{
-//    text errbuf[4096]; // lets hope the buffer is big enough
-//    sb4 errcode = 0;
-//
-//    (void) OCIErrorGet(handle, 1, (text *) NULL, &errcode,
-//            errbuf, (ub4) sizeof(errbuf), htype);
-//    (void) printf("Error - %.*s\n", (int)sizeof(errbuf), errbuf);
-//}
-//
-//void eval_return(void *handle, ub4 htype, sword status)
-//{
-//    switch (status)
-//    {
-//        case OCI_SUCCESS:
-//            break;
-//        case OCI_SUCCESS_WITH_INFO:
-//            (void) printf("Error - OCI_SUCCESS_WITH_INFO\n");
-//            break;
-//        case OCI_NEED_DATA:
-//            (void) printf("Error - OCI_NEED_DATA\n");
-//            break;
-//        case OCI_NO_DATA:
-//            (void) printf("Error - OCI_NODATA\n");
-//            break;
-//        case OCI_ERROR:
-//            (void) printf("Error - OCI_ERROR\n");
-//            if (handle)
-//            {
-//                print_err(handle,htype);
-//            }
-//            else
-//            {
-//                (void) printf("NULL handle\n");
-//                (void) printf("Unable to extract detailed diagnostic information\n");
-//            }
-//            break;
-//        case OCI_INVALID_HANDLE:
-//            (void) printf("Error - OCI_INVALID_HANDLE\n");
-//            break;
-//        case OCI_STILL_EXECUTING:
-//            (void) printf("Error - OCI_STILL_EXECUTE\n");
-//            break;
-//        case OCI_CONTINUE:
-//            (void) printf("Error - OCI_CONTINUE\n");
-//            break;
-//        default:
-//            break;
-//    }
-//}
+void parse_login(const char* input, char** user, char** pwd, char** db)
+{
+    const char* del1 = "/";
+    const char* del2 = "@";
+    int len = strlen(input);
+    char* input_copy = malloc(len);
+    char* head = NULL;
+    char* saveptr = NULL;
+
+    strncpy(input_copy, input, len);
+
+    head = strtok_r(input_copy, del1, &saveptr);
+    *user = calloc(strlen(head), sizeof(char));
+    strncpy(*user, head, strlen(head));
+
+    head = strtok_r(NULL, del2, &saveptr);
+    *pwd = calloc(strlen(head), sizeof(char));
+    strncpy(*pwd, head, strlen(head));
+
+    head = strtok_r(NULL, "\0", &saveptr);
+    *db = calloc(strlen(head), sizeof(char));
+    strncpy(*db, head, strlen(head));
+
+    free(input_copy);
+}
