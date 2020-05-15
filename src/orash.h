@@ -1,7 +1,4 @@
 #include <stdio.h>
-#include "linenoise.h"
-#include "builtin.h"
-#include "config.h"
 
 #ifndef __ORASH_H
 #define __ORASH_H

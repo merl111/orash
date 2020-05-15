@@ -1,9 +1,25 @@
+#define _DEFAULT_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <string.h>
 //#include <oci.h>
 #include "utils.h"
 
+/* Debugging macro. */
+#if 1
+FILE *shdbg_fp = NULL;
+#define shdbg(...) \
+    do { \
+        if (shdbg_fp == NULL) { \
+            shdbg_fp = fopen("/tmp/shdbg.txt","a"); \
+        } \
+        fprintf(shdbg_fp, ", " __VA_ARGS__); \
+        fflush(shdbg_fp); \
+    } while (0)
+#else
+#define lndebug(fmt, ...)
+#endif
 /*
  ** Return TRUE if a semicolon occurs anywhere in the first N characters
  ** of string z[].
@@ -84,6 +100,76 @@ int strlen30(const char *z)
     const char *z2 = z;
     while (*z2) { z2++; }
     return 0x3fffffff & (int)(z2 - z);
+}
+
+int is_sql(const char* str)
+{
+    if (strcasecmp(str, "select") == 0 || strcasecmp(str, "insert") == 0 || strcasecmp(str, "update") == 0
+            || strcasecmp(str, "delete") == 0 || strcasecmp(str, "alter") == 0 || strcasecmp(str, "commit") == 0)
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
+int is_plsql(const char* str)
+{
+    shdbg("plsql check: %s \n", str);
+    if (strcasecmp(str, "begin") == 0 || strcasecmp(str, "declare") == 0) 
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
+void identify_input(const char* input, int* mode)
+{
+    /*
+     * mode = 1 sql/other statement
+     * mode = 2 plsql
+     *
+     */
+
+    const char* del = " ";
+    int len = strlen(input);
+    char* input_copy = malloc(len);
+    char* head = NULL;
+    char* tail = NULL;
+
+    shdbg("input: %s \n", input);
+
+    if (input_copy == NULL)
+    {
+        *mode = -1;
+    }
+
+    strncpy(input_copy, input, len);
+
+    head = strtok_r(input_copy, del, &tail);
+    /* add NULL terminator */
+    head[len-strlen(tail)] = 0;
+
+    shdbg("head: %s \n", head);
+
+    if (is_sql(head))
+    {
+        shdbg("is sql %s \n", head);
+        *mode = 1;
+    }
+    else if (is_plsql(head))
+    {
+        shdbg("is plsql %s \n", head);
+        *mode = 2;
+    }
+    else
+    {
+        shdbg("fail %s \n", head);
+        *mode = -2;
+    }
+
+    free(input_copy);
 }
 
 //void print_err(void *handle, ub4 htype)

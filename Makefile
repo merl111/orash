@@ -1,69 +1,41 @@
-# tool marcros
-CC := gcc
-CCFLAG := -Wall -W -Os 
-DBGFLAG := -g -D_DEBUG
-CCOBJFLAG := $(CCFLAG) -c
+TARGET_EXEC ?= orash
 
-# path marcros
-BIN_PATH := bin
-OBJ_PATH := obj
-SRC_PATH := src
-DBG_PATH := debug
+BUILD_DIR ?= ./build
+SRC_DIRS ?= ./src
 
-# compile marcros
-TARGET_NAME := orash
-ifeq ($(OS),Windows_NT)
-	TARGET_NAME := $(addsuffix .exe,$(TARGET_NAME))
-endif
-TARGET := $(BIN_PATH)/$(TARGET_NAME)
-TARGET_DEBUG := $(DBG_PATH)/$(TARGET_NAME)
-MAIN_SRC := src/repl.c
+SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.c -or -name *.s)
+OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
+DEPS := $(OBJS:.o=.d)
 
-# src files & obj files
-SRC := $(foreach x, $(SRC_PATH), $(wildcard $(addprefix $(x)/*,.c*)))
-OBJ := $(addprefix $(OBJ_PATH)/, $(addsuffix .o, $(notdir $(basename $(SRC)))))
-OBJ_DEBUG := $(addprefix $(DBG_PATH)/, $(addsuffix .o, $(notdir $(basename $(SRC)))))
+INC_DIRS := $(shell find $(SRC_DIRS) -type d)
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-# clean files list
-DISTCLEAN_LIST := $(OBJ) \
-                  $(OBJ_DEBUG)
-CLEAN_LIST := $(TARGET) \
-			  $(TARGET_DEBUG) \
-			  $(DISTCLEAN_LIST)
+CPPFLAGS ?= $(INC_FLAGS) -MMD -MP
 
-# default rule
-default: all
+$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
+	$(CC) $(OBJS) -o $@ $(LDFLAGS)
 
-# non-phony targets
-$(TARGET): $(OBJ)
-	$(CC) $(CCFLAG) -o $@ $?
+# assembly
+$(BUILD_DIR)/%.s.o: %.s
+	$(MKDIR_P) $(dir $@)
+	$(AS) $(ASFLAGS) -c $< -o $@
 
-$(OBJ_PATH)/%.o: $(SRC_PATH)/%.c*
-	@mkdir -p obj
-	@mkdir -p bin 
-	$(CC) $(CCOBJFLAG) -o $@ $<
+# c source
+$(BUILD_DIR)/%.c.o: %.c
+	$(MKDIR_P) $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(DBG_PATH)/%.o: $(SRC_PATH)/%.c*
-	@mkdir -p debug
-	@mkdir -p bin 
-	$(CC) $(CCOBJFLAG) $(DBGFLAG) -o $@ $<
+# c++ source
+$(BUILD_DIR)/%.cpp.o: %.cpp
+	$(MKDIR_P) $(dir $@)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-$(TARGET_DEBUG): $(OBJ_DEBUG)
-	$(CC) $(CCFLAG) $(DBGFLAG) $? -o $@
-
-# phony rules
-.PHONY: all
-all: $(TARGET)
-
-.PHONY: debug
-debug: $(TARGET_DEBUG)
 
 .PHONY: clean
-clean:
-	@echo CLEAN $(CLEAN_LIST)
-	@rm -f $(CLEAN_LIST)
 
-.PHONY: distclean
-distclean:
-	@echo CLEAN $(CLEAN_LIST)
-	@rm -f $(DISTCLEAN_LIST)
+clean:
+	$(RM) -r $(BUILD_DIR)
+
+-include $(DEPS)
+
+MKDIR_P ?= mkdir -p

@@ -4,12 +4,14 @@
 #include <unistd.h>
 #include <assert.h>
 
-#include "orash.h"
+#include "config.h"
+#include "builtin.h"
 #include "utils.h"
+#include "orash.h"
 #include "linenoise.h"
 
 
-void _completion(const char *buf, linenoiseCompletions *lc) 
+void _completion(const char *buf, linenoiseCompletions *lc)
 {
     char* match = NULL;
     if (find_matching(buf, &match))
@@ -18,7 +20,7 @@ void _completion(const char *buf, linenoiseCompletions *lc)
     }
 }
 
-char* _hints(const char *buf, int *color, int *bold) 
+char* _hints(const char *buf, int *color, int *bold)
 {
 
     if(strlen(buf) == 0)
@@ -94,14 +96,14 @@ void segv_handler(int sig)
 }
 #endif
 
-static void out_of_memory(void)
+void out_of_memory(void)
 {
     fprintf(stderr,"Error: ORASH ran out of memory! \
             Sir, can I have some more please...\n");
     exit(-1);
 }
 
-static void get_line(char** result, int continous)
+void get_line(char** result, int continous)
 {
     char *ora_prompt;
 
@@ -110,7 +112,8 @@ static void get_line(char** result, int continous)
     //if( ora_result && *ora_result ) shell_add_history(ora_result);
 }
 
-static int get_input(orash_t *p)
+
+int get_input(orash_t *p)
 {
     char *line = 0;          /* A single input line */
     char *sql = 0;           /* Accumulated SQL text */
@@ -120,13 +123,15 @@ static int get_input(orash_t *p)
     int prev_len_sql = 0;        /* Bytes of sql[] used by prior line */
     int errCnt = 0;           /* Number of errors seen */
     int startline = 0;        /* Line number for start of current input */
+    int mode = 0;
 
     p->lineno = 0;
     while(1)
     {
         fflush(p->ofd);
         get_line(&line, len_sql > 0);
-        if( line==0 )
+
+        if (line == 0 )
         {
             /* End of input */
             if(p->ifd == 0) printf("\n");
@@ -134,14 +139,15 @@ static int get_input(orash_t *p)
         }
 
         p->lineno++;
-        if( len_sql == 0 && only_whitespace(line) )
+        if (len_sql == 0 && only_whitespace(line))
         {
             continue;
         }
 
-        if( line && len_sql == 0 )
+        if (line && len_sql == 0)
         {
             builtin_t* builtin;
+
             if (get_func_by_name(line, &builtin))
             {
                 linenoiseHistoryAdd(line);
@@ -151,11 +157,6 @@ static int get_input(orash_t *p)
                 builtin->func(builtin->args);
                 continue;
             }
-        }
-
-        if (is_terminator(line) && is_complete_sql(sql, len_sql))
-        {
-            memcpy(line,";",2);
         }
 
         len_line = strlen30(line);
@@ -185,17 +186,48 @@ static int get_input(orash_t *p)
             len_sql += len_line;
         }
 
+
+        if (mode == 0)
+        {
+            // check if sql or plsql
+            identify_input(sql, &mode);
+        }
+
+        if (mode == -1)
+        {
+            out_of_memory();
+        }
+
+        if (mode == 1 && len_sql && contains_semicolon(&sql[0], len_sql))
+        {
+
+            printf("would execute sql now");
+            mode = 0;
+            len_sql = 0;
+
+        }
+        else if (mode == 2 && len_sql && is_terminator(&sql[len_sql-1]))
+        {
+            printf("would execute plsql now");
+            mode = 0;
+            len_sql = 0;
+        }
+        else if (len_sql && only_whitespace(sql))
+        {
+            len_sql = 0;
+        }
     }
 
     if (len_sql && !only_whitespace(sql))
     {
+        printf("len sql: %s ", sql);
         //TODO
         //errCnt += runStatement(p, sql, p->ifd, startline);
     }
 
     free(sql);
     free(line);
-    return errCnt>0;
+    return errCnt > 0;
 }
 
 int main(int argc, char **argv) {
@@ -210,7 +242,7 @@ int main(int argc, char **argv) {
      * mlmode 2 = multi line editing
      */
 
-    linenoiseSetMultiLine(2);
+    linenoiseSetMultiLine(1);
     while(argc > 1) {
         argc--;
         argv++;
@@ -225,8 +257,7 @@ int main(int argc, char **argv) {
 
 
     orash_t sh_state;
-
-    //TODO init sh_state
+    //init_orash(&sh_state);
 
     ret = get_input(&sh_state);
     return 0;
