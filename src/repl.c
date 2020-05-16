@@ -128,7 +128,6 @@ int get_input(orash_t *p)
     p->lineno = 0;
     while(1)
     {
-        fflush(p->ofd);
         get_line(&line, len_sql > 0);
 
         if (line == 0 )
@@ -198,10 +197,31 @@ int get_input(orash_t *p)
             out_of_memory();
         }
 
-        if (mode == 1 && len_sql && contains_semicolon(&sql[0], len_sql))
+        if (mode == 1 && len_sql && contains_semicolon(&sql[0], len_sql, 1))
         {
 
-            printf("would execute sql now");
+            print_text("\n");
+            p->current_stmt = p->create_stmt(p->conn);
+            p->exec_stmt(p->current_stmt, OTEXT(sql));
+
+            // hack remove later:
+
+            OCI_Describe(p->current_stmt, OTEXT(sql));
+            OCI_Resultset* rs = OCI_GetResultset(p->current_stmt);
+            int n = OCI_GetColumnCount(rs);
+            for(int i = 1; i <= n; i++)
+            {
+                OCI_Column *col = OCI_GetColumn(rs, i);
+                print_frmt("> Column : #%i ", i);
+                print_text(" - Name   : "); print_ostr(OCI_ColumnGetName(col));
+                print_text(" - Type   : "); print_ostr(OCI_GetColumnSQLType(col));
+                print_text("\n");
+            }
+
+            print_text("\n");
+            // hack end
+
+            p->free_stmt(p->current_stmt);
             mode = 0;
             len_sql = 0;
 
@@ -263,8 +283,6 @@ int main(int argc, char **argv) {
         exit(-1);
     }
 
-    printf("Database successfully initialized!!");
-    
     free(user);
     free(pwd);
     free(db);

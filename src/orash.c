@@ -15,7 +15,13 @@ int init_orash(orash_t* sh, char* user, char* pwd, char* db)
         return EXIT_FAILURE;
     }
 
-    sh->conn = OCI_ConnectionCreate(db, user, pwd, OCI_SESSION_DEFAULT);
+    sh->conn        = OCI_ConnectionCreate(db, user, pwd, OCI_SESSION_DEFAULT);
+    sh->create_stmt = OCI_StatementCreate;
+    sh->exec_stmt   = OCI_ExecuteStmt;
+    sh->free_stmt   = OCI_StatementFree;
+    sh->commit      = OCI_Commit;
+    sh->rollback    = OCI_Rollback;
+
 
     printf("Server major    version : %i\n", OCI_GetServerMajorVersion(sh->conn));
     printf("Server minor    version : %i\n", OCI_GetServerMinorVersion(sh->conn));

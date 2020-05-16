@@ -8,7 +8,9 @@
 #define IsDigit(X)  isdigit((unsigned char)X)
 #define ToLower(X)  (char)tolower((unsigned char)X)
 
-int contains_semicolon(const char *z, int N);
+#define contains_semicolon_nt(x, y) contains_semicolon(x,y,0)
+
+int contains_semicolon(char *z, int N, int trim);
 int only_whitespace(const char *z);
 int is_terminator(const char *line);
 int strlen30(const char *z);

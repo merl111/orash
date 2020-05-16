@@ -24,10 +24,20 @@ FILE *shdbg_fp = NULL;
  ** Return TRUE if a semicolon occurs anywhere in the first N characters
  ** of string z[].
  */
-int contains_semicolon(const char *z, int N)
+int contains_semicolon(char *z, int N, int trim)
 {
     int i;
-    for(i=0; i<N; i++) {  if( z[i]==';' ) return 1; }
+    for(i=0; i<N; i++)
+    {
+        if( z[i]==';' )
+        {
+            if (trim)
+            {
+                z[i] = 0;
+            }
+            return 1; 
+        }
+    }
     return 0;
 }
 

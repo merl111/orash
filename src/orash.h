@@ -4,6 +4,30 @@
 
 #ifndef __ORASH_H
 #define __ORASH_H
+/* --------------------------------------------------------------------------------------------- *
+ * STRING PRINTING
+ * --------------------------------------------------------------------------------------------- */
+
+#define print_frmt(f, x)    printf(f, x)
+#define print_text(x)       printf(x)
+
+#if defined(OCI_CHARSET_WIDE)
+    #ifdef _WINDOWS
+        #define print_ostr(x)   wprintf(OTEXT("%s"), x)
+#else
+        #define print_ostr(x)   printf("%ls", x)
+#endif
+#else
+  #define print_ostr(x)   printf(OTEXT("%s"), x)
+#endif
+
+typedef OCI_Statement* (*stmt_c_func_p)(OCI_Connection*);
+
+typedef int (*stmt_e_func_p)(OCI_Statement*, const otext* sql);
+typedef int (*stmt_f_func_p)(OCI_Statement*);
+
+typedef int (*commit_func_p)(OCI_Connection*);
+typedef int (*rollback_func_p)(OCI_Connection*);
 
 /*
 ** State information about the database connection is contained in an
@@ -12,13 +36,19 @@
 // TODO remove unnecessary stuff, and add what we need.
 typedef struct {
     OCI_Connection* conn;
+    OCI_Statement* current_stmt;
+    stmt_c_func_p create_stmt;
+    stmt_e_func_p exec_stmt;
+    stmt_f_func_p free_stmt;
+    commit_func_p commit;
+    rollback_func_p rollback;
+
     unsigned mEqpLines;    
     int outCount;          
     int cnt;               
     int lineno;            
     int openFlags;         
     FILE *ifd;             
-    FILE *ofd;             
     FILE *tfd;             
     int nErr;              
     int mode;              
