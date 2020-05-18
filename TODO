@@ -3,7 +3,10 @@ todo:
 - add config processor for .orashrc
 - add spool/redirect
 - connection manager
-- implement OCI
+- implement OCI                                                                                        [in progress] merl111
+- parser for all shell commands (should be done with flex/bison)                                       [in progress] merl111
+- autocompletion for sql
+- autocompletion for plsql
 - implement safe strcpy (maybe strcpy_s)
 - pin results ( save query results to view again later )
 - table print for result, check OCI lib if there's already something
@@ -12,10 +15,20 @@ todo:
 - filename completion
 
 future:
-- simple enviroment struct, should be easier to handlu multiple OCI connections then
-- status line, schema browser, needs ncurses or termbox, bigger task
+- simple enviroment struct, should be easier to handle multiple OCI connections then                    [orash.h] 
+- status line
+- schema browser, needs ncurses or termbox, bigger task
+- maybe a gui? 
 
 should be done:
 - improve build system
 - implement args for builtins
 - fix hints, show only part left from hint.
+
+notes:
+
+Everything that should be shared within a shell session (not database session) can be added to orash_t struct defined in
+orash.h. A this struct is initialized in main and a pointer from it is passed wherever needed.
+
+The parser is useful to distinguish between builtin commands, dml, ddl statements, could also parse plsql later on and 
+be used as a linter for sql/plsql one day.

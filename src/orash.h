@@ -79,4 +79,6 @@ typedef struct {
 int init_orash(orash_t* sh, char* user, char* pwd, char* db);
 void cleanup_orash(orash_t* sh);
 
+void print_rs_table(OCI_Resultset* rs);
+
 #endif /* __ORASH_H */

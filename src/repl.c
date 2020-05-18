@@ -112,7 +112,6 @@ void get_line(char** result, int continous)
     //if( ora_result && *ora_result ) shell_add_history(ora_result);
 }
 
-
 int get_input(orash_t *p)
 {
     char *line = 0;          /* A single input line */
@@ -149,9 +148,6 @@ int get_input(orash_t *p)
 
             if (get_func_by_name(line, &builtin))
             {
-                linenoiseHistoryAdd(line);
-                linenoiseHistorySave(hist_path);
-
                 // now call builtin func
                 builtin->func(builtin->args);
                 continue;
@@ -202,26 +198,21 @@ int get_input(orash_t *p)
 
             print_text("\n");
             p->current_stmt = p->create_stmt(p->conn);
-            p->exec_stmt(p->current_stmt, OTEXT(sql));
+            int ret = p->exec_stmt(p->current_stmt, OTEXT(sql));
+            //OCI_ExecuteStmt(p->current_stmt, OTEXT(sql));
 
-            // hack remove later:
-
-            OCI_Describe(p->current_stmt, OTEXT(sql));
-            OCI_Resultset* rs = OCI_GetResultset(p->current_stmt);
-            int n = OCI_GetColumnCount(rs);
-            for(int i = 1; i <= n; i++)
+            if (ret)
             {
-                OCI_Column *col = OCI_GetColumn(rs, i);
-                print_frmt("> Column : #%i ", i);
-                print_text(" - Name   : "); print_ostr(OCI_ColumnGetName(col));
-                print_text(" - Type   : "); print_ostr(OCI_GetColumnSQLType(col));
-                print_text("\n");
+                OCI_Resultset* rs = OCI_GetResultset(p->current_stmt);
+                print_rs_table(rs);
+
+                p->free_stmt(p->current_stmt);
+
             }
 
-            print_text("\n");
-            // hack end
+            //OCI_Describe(p->current_stmt, OTEXT(sql));
 
-            p->free_stmt(p->current_stmt);
+            /* formats a table and prints it */
             mode = 0;
             len_sql = 0;
 
@@ -235,14 +226,12 @@ int get_input(orash_t *p)
         else if (len_sql && only_whitespace(sql))
         {
             len_sql = 0;
+            mode = 0;
         }
-    }
 
-    if (len_sql && !only_whitespace(sql))
-    {
-        printf("len sql: %s ", sql);
-        //TODO
-        //errCnt += runStatement(p, sql, p->ifd, startline);
+        linenoiseHistoryAdd(sql);
+        linenoiseHistorySave(hist_path);
+
     }
 
     free(sql);
